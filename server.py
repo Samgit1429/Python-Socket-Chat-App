@@ -1,8 +1,9 @@
+# server.py
 import threading
 import socket
 
 PORT = 5050
-SERVER = "localhost"
+SERVER = socket.gethostbyname(socket.gethostname())
 ADDR = (SERVER, PORT)
 FORMAT = "utf-8"
 DISCONNECT_MESSAGE = "!DISCONNECT"
@@ -34,8 +35,8 @@ def handle_client(conn, addr):
     finally:
         with clients_lock:
             clients.remove(conn)
-
         conn.close()
+
 
 def broadcast(message):
     with clients_lock:
@@ -43,9 +44,10 @@ def broadcast(message):
             try:
                 client.sendall(message.encode(FORMAT))
             except:
-                #Handle broken connections
+                # Handle broken connections
                 clients.remove(client)
                 client.close()
+
 
 def accept_connections():
     server.listen()
@@ -58,12 +60,13 @@ def accept_connections():
         thread.start()
         print(f"[ACTIVE CONNECTIONS] {threading.active_count() -1}")
 
+
 def server_input():
     while True:
         msg = input()
         if msg.lower() == 'shutdown':
             print("Shutting down server...")
-            with client in clients:
+            with clients_lock:
                 for client in clients:
                     try:
                         client.sendall(DISCONNECT_MESSAGE.encode(FORMAT))
@@ -76,6 +79,7 @@ def server_input():
         else:
             broadcast(f"[SERVER] {msg}")
 
+
 def start():
     print('[SERVER STARTED]!')
     accept_thread = threading.Thread(target=accept_connections)
@@ -86,6 +90,7 @@ def start():
 
     accept_thread.join()
     input_thread.join()
+
 
 if __name__ == "__main__":
     start()

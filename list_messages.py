@@ -1,3 +1,4 @@
+# list_messages.py
 import socket
 import threading
 
@@ -13,6 +14,7 @@ def connect():
     client.connect(ADDR)
     return client
 
+
 def receive_messages(client):
     while True:
         try:
@@ -22,20 +24,22 @@ def receive_messages(client):
                 break
             print(msg)
         except:
-            print("An error occured. Connection closed.")
+            print("An error occurred. Connection closed.")
             break
     client.close()
+
 
 def start():
     connection = connect()
     print("Connected to the server. Listening for messages...")
-    print("Press Ctrl+C to discconect.")
+    print("Press Ctrl+C to disconnect.")
 
     receive_thread = threading.Thread(target=receive_messages, args=(connection,))
     receive_thread.start()
 
     receive_thread.join()
     print('Disconnected')
+
 
 if __name__ == "__main__":
     try:
