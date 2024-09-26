@@ -26,28 +26,66 @@ def handle_client(conn, addr):
 
             if msg == DISCONNECT_MESSAGE:
                 connected = False
+                print(f"[DISCONNECT] {addr} disconnected")
+                break
 
             print(f"[{addr}] {msg}")
-            with clients_lock:
-                for c in clients:
-                    c.sendall(f"[{addr}] {msg}".encode(FORMAT))
-
+            broadcast(f"[{addr}] {msg}")
     finally:
         with clients_lock:
             clients.remove(conn)
 
         conn.close()
 
+def broadcast(message):
+    with clients_lock:
+        for client in list(clients):
+            try:
+                client.sendall(message.encode(FORMAT))
+            except:
+                #Handle broken connections
+                clients.remove(client)
+                client.close()
 
-def start():
-    print('[SERVER STARTED]!')
+def accept_connections():
     server.listen()
+    print('[SERVER STARTED] Listening...')
     while True:
         conn, addr = server.accept()
         with clients_lock:
             clients.add(conn)
         thread = threading.Thread(target=handle_client, args=(conn, addr))
         thread.start()
+        print(f"[ACTIVE CONNECTIONS] {threading.active_count() -1}")
 
+def server_input():
+    while True:
+        msg = input()
+        if msg.lower() == 'shutdown':
+            print("Shutting down server...")
+            with client in clients:
+                for client in clients:
+                    try:
+                        client.sendall(DISCONNECT_MESSAGE.encode(FORMAT))
+                        client.close()
+                    except:
+                        pass
+                clients.clear()
+            server.close()
+            break
+        else:
+            broadcast(f"[SERVER] {msg}")
 
-start()
+def start():
+    print('[SERVER STARTED]!')
+    accept_thread = threading.Thread(target=accept_connections)
+    accept_thread.start()
+
+    input_thread = threading.Thread(target=server_input)
+    input_thread.start()
+
+    accept_thread.join()
+    input_thread.join()
+
+if __name__ == "__main__":
+    start()
