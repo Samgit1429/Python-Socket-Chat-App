@@ -1,6 +1,7 @@
 # server.py
 import threading
 import socket
+import datetime
 
 PORT = 5050
 SERVER = socket.gethostbyname(socket.gethostname())
@@ -34,8 +35,11 @@ def handle_client(conn, addr):
                 print(f"[DISCONNECT] {addr} disconnected")
                 break
 
-            print(f"[{addr}] {msg}")
-            broadcast(f"[{addr}] {msg}")
+            timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            message_with_timestamp = f"[{timestamp}] [{addr}] {msg}"
+
+            print(message_with_timestamp)
+            broadcast(message_with_timestamp)
     finally:
         with clients_lock:
             clients.remove(conn)
@@ -82,7 +86,9 @@ def server_input():
             server.close()
             break
         else:
-            broadcast(f"[SERVER] {msg}")
+            timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            message_with_timestamp = f"[{timestamp}] [SERVER] {msg}"
+            broadcast(message_with_timestamp)
 
 
 def start():
