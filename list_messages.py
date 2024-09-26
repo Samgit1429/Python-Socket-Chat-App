@@ -1,5 +1,5 @@
 import socket
-import time
+import threading
 
 PORT = 5050
 SERVER = "localhost"
@@ -13,12 +13,32 @@ def connect():
     client.connect(ADDR)
     return client
 
+def receive_messages(client):
+    while True:
+        try:
+            msg = client.recv(1024).decode(FORMAT)
+            if msg == DISCONNECT_MESSAGE:
+                print("Disconnected from server.")
+                break
+            print(msg)
+        except:
+            print("An error occured. Connection closed.")
+            break
+    client.close()
 
 def start():
     connection = connect()
-    while True:
-        msg = connection.recv(1024).decode(FORMAT)
-        print(msg)
+    print("Connected to the server. Listening for messages...")
+    print("Press Ctrl+C to discconect.")
 
+    receive_thread = threading.Thread(target=receive_messages, args=(connection,))
+    receive_thread.start()
 
-start()
+    receive_thread.join()
+    print('Disconnected')
+
+if __name__ == "__main__":
+    try:
+        start()
+    except KeyboardInterrupt:
+        print("\nDisconnected manually.")
