@@ -11,9 +11,13 @@ DISCONNECT_MESSAGE = "!DISCONNECT"
 
 
 def connect():
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect(ADDR)
-    return client
+    try:
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.connect(ADDR)
+        return client
+    except ConnectionRefusedError:
+        print("[ERROR] Cannot connect to the server. Make sure the server is running.")
+        return None
 
 
 def send_messages(client):
@@ -34,8 +38,11 @@ def receive_messages(client):
                 print("Disconnected from server.")
                 break
             print(msg)
-        except:
-            print("An error occurred. Connection closed.")
+        except ConnectionResetError:
+            print("[ERROR] Connection lost.")
+            break
+        except OSError:
+            print("[ERROR] Conection closed.")
             break
     client.close()
 

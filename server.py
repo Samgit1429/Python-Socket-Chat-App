@@ -21,8 +21,12 @@ def handle_client(conn, addr):
     try:
         connected = True
         while connected:
-            msg = conn.recv(1024).decode(FORMAT)
-            if not msg:
+            try:
+                msg = conn.recv(1024).decode(FORMAT)
+                if not msg:
+                    break
+            except:
+                print(f"[ERROR] Connection lost with {addr}")
                 break
 
             if msg == DISCONNECT_MESSAGE:
@@ -43,8 +47,9 @@ def broadcast(message):
         for client in list(clients):
             try:
                 client.sendall(message.encode(FORMAT))
-            except:
+            except (ConnectionResetError, BrokenPipeError):
                 # Handle broken connections
+                print(f"[ERROR] Could not send message to a client, removing from list.")
                 clients.remove(client)
                 client.close()
 
